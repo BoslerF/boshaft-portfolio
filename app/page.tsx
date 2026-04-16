@@ -14,12 +14,13 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const playfair = Playfair_Display({ subsets: ["latin"] });
 const geist = Geist({ subsets: ["latin"] });
 
-// --- SWIPE LOGIK ---
+// --- SWIPE LOGIK & ANIMATIONEN ---
 const swipeConfidenceThreshold = 10000;
 const swipePower = (offset: number, velocity: number) => {
   return Math.abs(offset) * velocity;
 };
 
+// Animation für den kleinen Sucher (leicht transparent)
 const sliderVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 300 : -300,
@@ -33,6 +34,24 @@ const sliderVariants = {
   exit: (direction: number) => ({
     zIndex: 0,
     x: direction < 0 ? 300 : -300,
+    opacity: 0,
+  }),
+};
+
+// Animation für die große Lightbox (volle Deckkraft, weiterer Flugweg)
+const lightboxVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 800 : -800,
+    opacity: 0,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 800 : -800,
     opacity: 0,
   }),
 };
@@ -221,20 +240,22 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setIsLightboxOpen(false)} // Klick auf den Hintergrund schließt die Lightbox
-            className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
+            onClick={() => setIsLightboxOpen(false)} 
+            // bg-[rgba(0,0,0,0.95)] ist sicherer als bg-black/95 und z-[999] legt es ganz nach vorne
+            className="fixed inset-0 z-[999] bg-[rgba(0,0,0,0.95)] flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
           >
             <AnimatePresence initial={false} custom={direction}>
               <motion.img 
                 key={currentIndex} 
                 custom={direction}
-                variants={sliderVariants}
+                variants={lightboxVariants}
                 initial="enter"
-                animate={{ zIndex: 1, x: 0, opacity: 1 }} 
+                animate="center" // Nutzt nun strikt die sauberen Variante, kein "object-override"
                 exit="exit"
                 transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
                 src={images[currentIndex].url} 
-                className="absolute max-w-full max-h-full object-contain shadow-2xl cursor-grab active:cursor-grabbing" 
+                // w-full h-full object-contain garantiert, dass das Bild immer sichtbar bleibt
+                className="absolute w-full h-full object-contain p-4 md:p-12 shadow-2xl cursor-grab active:cursor-grabbing" 
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={1}
@@ -246,7 +267,7 @@ export default function Home() {
                     paginate(-1);
                   }
                 }}
-                onClick={(e) => e.stopPropagation()} // WICHTIG: Verhindert, dass der Klick auf das Bild die Lightbox schließt
+                onClick={(e) => e.stopPropagation()} 
               />
             </AnimatePresence>
 
@@ -254,13 +275,13 @@ export default function Home() {
               <>
                 <button 
                   onClick={prevImage} 
-                  className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[210] cursor-pointer"
+                  className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[1000] cursor-pointer"
                 >
                   &#8249;
                 </button>
                 <button 
                   onClick={nextImage} 
-                  className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[210] cursor-pointer"
+                  className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[1000] cursor-pointer"
                 >
                   &#8250;
                 </button>
