@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -15,15 +16,14 @@ const geist = Geist({ subsets: ["latin"] });
 
 export default function Home() {
   const [currentSection, setCurrentSection] = useState<string | null>(null);
-  const [images, setImages] = useState<any[]>([]);
+  // Typisierung für Vercel angepasst (statt any)
+  const [images, setImages] = useState<Record<string, any>[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   
-  // Referenzen für Audio UND Video
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Bilder laden und Index zurücksetzen, wenn Kategorie wechselt
   useEffect(() => {
     async function fetchImages() {
       if (currentSection) {
@@ -45,7 +45,6 @@ export default function Home() {
   }, [currentSection]);
 
   const handleNavigation = (section: string | null) => {
-    // Wenn in eine Sektion gewechselt wird: Auslöser spielen!
     if (section !== null) {
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
@@ -57,13 +56,11 @@ export default function Home() {
       }
     }
 
-    // Kurze Verzögerung, damit das Video schließen kann, bevor der Text wechselt
     setTimeout(() => { 
       setCurrentSection(section); 
     }, 200); 
   };
 
-  // Navigation durch die Bilder
   const nextImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -82,14 +79,13 @@ export default function Home() {
       <div className="fixed inset-0 z-0 flex items-center justify-center bg-black p-4">
         <div className="relative w-full h-full max-w-[1600px] max-h-[900px] flex items-center justify-center">
           
-          {/* VIDEO MIT AUTOPLAY */}
           <video 
             ref={videoRef}
             src="/viewfinder.mp4" 
-            autoPlay                    /* Startet beim Laden der Seite 1x stumm durch */
+            autoPlay
             preload="auto"
             className="w-full h-full object-contain z-20 pointer-events-none opacity-100"
-            muted                       /* Zwingend erforderlich, damit autoPlay im Browser erlaubt wird */
+            muted
             playsInline
           />
 
@@ -100,7 +96,7 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] max-w-[500px] aspect-[4/3] rounded-[40px] overflow-hidden z-30 pointer-events-auto group shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[45vw] max-w-[450px] aspect-[4/3] rounded-[40px] overflow-hidden z-30 pointer-events-auto group shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]"
               >
                 <img 
                   src={images[currentIndex].url} 
@@ -125,11 +121,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 2. DYNAMISCHES LAYOUT (Texte & Menü) */}
+      {/* 2. DYNAMISCHES LAYOUT */}
       <div className="relative z-50 w-full h-screen pointer-events-none">
         <AnimatePresence mode="wait">
           {!currentSection ? (
-            /* --- STARTSEITE --- */
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative pointer-events-auto">
               <div className="absolute top-[20vh] left-1/2 -translate-x-1/2 pointer-events-none text-center">
                 <h1 className={`${playfair.className} text-white text-6xl md:text-8xl tracking-[0.4em] font-bold italic uppercase`}>
@@ -148,7 +143,6 @@ export default function Home() {
               </nav>
             </motion.div>
           ) : (
-            /* --- SEKTIONS-ANSICHT --- */
             <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative pt-12 md:pt-24 pl-20 md:pl-40 flex flex-col items-start pointer-events-none">
               <div className="flex flex-col gap-2 pointer-events-none">
                 <h1 className={`${playfair.className} text-white/40 text-2xl tracking-[0.5em] font-bold italic uppercase`}>
@@ -169,7 +163,7 @@ export default function Home() {
         </AnimatePresence>
       </div>
 
-      {/* 3. LIGHTBOX (Hochauflösende Ansicht) */}
+      {/* 3. LIGHTBOX */}
       <AnimatePresence>
         {isLightboxOpen && images.length > 0 && (
           <motion.div 
