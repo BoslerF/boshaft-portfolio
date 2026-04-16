@@ -20,7 +20,6 @@ const swipePower = (offset: number, velocity: number) => {
   return Math.abs(offset) * velocity;
 };
 
-// Animation für den kleinen Sucher (leicht transparent)
 const sliderVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 300 : -300,
@@ -38,7 +37,6 @@ const sliderVariants = {
   }),
 };
 
-// Animation für die große Lightbox (volle Deckkraft, weiterer Flugweg)
 const lightboxVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 800 : -800,
@@ -136,9 +134,9 @@ export default function Home() {
             playsInline
           />
 
-          {/* VORSCHAU: KLEINER & WISCHBAR */}
+          {/* VORSCHAU: KLEINER & WISCHBAR (Bleibt jetzt immer im Hintergrund) */}
           <AnimatePresence>
-            {currentSection && images.length > 0 && !isLightboxOpen && (
+            {currentSection && images.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -241,35 +239,37 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsLightboxOpen(false)} 
-            // bg-[rgba(0,0,0,0.95)] ist sicherer als bg-black/95 und z-[999] legt es ganz nach vorne
-            className="fixed inset-0 z-[999] bg-[rgba(0,0,0,0.95)] flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
+            className="fixed inset-0 z-[999] bg-[rgba(0,0,0,0.95)] flex items-center justify-center cursor-zoom-out"
           >
-            <AnimatePresence initial={false} custom={direction}>
-              <motion.img 
-                key={currentIndex} 
-                custom={direction}
-                variants={lightboxVariants}
-                initial="enter"
-                animate="center" // Nutzt nun strikt die sauberen Variante, kein "object-override"
-                exit="exit"
-                transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
-                src={images[currentIndex].url} 
-                // w-full h-full object-contain garantiert, dass das Bild immer sichtbar bleibt
-                className="absolute w-full h-full object-contain p-4 md:p-12 shadow-2xl cursor-grab active:cursor-grabbing" 
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={1}
-                onDragEnd={(e, { offset, velocity }) => {
-                  const swipe = swipePower(offset.x, velocity.x);
-                  if (swipe < -swipeConfidenceThreshold) {
-                    paginate(1);
-                  } else if (swipe > swipeConfidenceThreshold) {
-                    paginate(-1);
-                  }
-                }}
-                onClick={(e) => e.stopPropagation()} 
-              />
-            </AnimatePresence>
+            {/* NEU: Ein Container mit festen Maßen (90% Breite/Höhe), der das Bild hält. Verhindert das Kollabieren! */}
+            <div className="relative w-[90vw] h-[90vh] flex items-center justify-center">
+              <AnimatePresence initial={false} custom={direction}>
+                <motion.img 
+                  key={currentIndex} 
+                  custom={direction}
+                  variants={lightboxVariants}
+                  initial="enter"
+                  animate="center" 
+                  exit="exit"
+                  transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+                  src={images[currentIndex].url} 
+                  // Nur noch max-w und max-h, statt absolute w-full h-full
+                  className="absolute max-w-full max-h-full object-contain shadow-2xl cursor-grab active:cursor-grabbing" 
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={1}
+                  onDragEnd={(e, { offset, velocity }) => {
+                    const swipe = swipePower(offset.x, velocity.x);
+                    if (swipe < -swipeConfidenceThreshold) {
+                      paginate(1);
+                    } else if (swipe > swipeConfidenceThreshold) {
+                      paginate(-1);
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()} 
+                />
+              </AnimatePresence>
+            </div>
 
             {images.length > 1 && (
               <>
