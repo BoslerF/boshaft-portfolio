@@ -14,13 +14,12 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const playfair = Playfair_Display({ subsets: ["latin"] });
 const geist = Geist({ subsets: ["latin"] });
 
-// --- SWIPE LOGIK (Für das Wischen am Handy) ---
+// --- SWIPE LOGIK ---
 const swipeConfidenceThreshold = 10000;
 const swipePower = (offset: number, velocity: number) => {
   return Math.abs(offset) * velocity;
 };
 
-// Animation für den Bildwechsel (Filmstreifen-Effekt)
 const sliderVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 300 : -300,
@@ -29,7 +28,7 @@ const sliderVariants = {
   center: {
     zIndex: 1,
     x: 0,
-    opacity: 0.8, // Behält die Transparenz für den Sucher-Look
+    opacity: 0.8,
   },
   exit: (direction: number) => ({
     zIndex: 0,
@@ -43,8 +42,6 @@ export default function Home() {
   const [images, setImages] = useState<Record<string, any>[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  
-  // Neuer State für die Wisch-Richtung (Filmstreifen slidet nach links oder rechts)
   const [direction, setDirection] = useState(0);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -87,7 +84,6 @@ export default function Home() {
     }, 200); 
   };
 
-  // Hilfsfunktion zum Wechseln der Bilder mit Richtung
   const paginate = (newDirection: number) => {
     setDirection(newDirection);
     setCurrentIndex((prev) => (prev + newDirection + images.length) % images.length);
@@ -128,10 +124,8 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                // Verkleinert auf w-[35vw] und max-w-[350px]
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35vw] max-w-[350px] aspect-[4/3] rounded-[30px] overflow-hidden z-30 pointer-events-auto group shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] flex items-center justify-center"
               >
-                {/* BILD-CAROUSEL MIT WIE-EFFEKT */}
                 <AnimatePresence initial={false} custom={direction}>
                   <motion.img 
                     key={currentIndex}
@@ -146,25 +140,22 @@ export default function Home() {
                       x: { type: "spring", stiffness: 300, damping: 30 },
                       opacity: { duration: 0.2 }
                     }}
-                    // Wisch-Gesten Einstellungen
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={1}
                     onDragEnd={(e, { offset, velocity }) => {
                       const swipe = swipePower(offset.x, velocity.x);
                       if (swipe < -swipeConfidenceThreshold) {
-                        paginate(1); // Nach links wischen = nächstes Bild
+                        paginate(1);
                       } else if (swipe > swipeConfidenceThreshold) {
-                        paginate(-1); // Nach rechts wischen = vorheriges Bild
+                        paginate(-1);
                       }
                     }}
                     onClick={() => setIsLightboxOpen(true)}
-                    // cursor-grab für den Desktop-Mauszeiger
-                    className="absolute w-full h-full object-cover scale-110 grayscale mix-blend-multiply cursor-grab active:cursor-grabbing"
+                    className="absolute w-full h-full object-cover scale-110 grayscale mix-blend-multiply cursor-zoom-in active:cursor-grabbing"
                   />
                 </AnimatePresence>
 
-                {/* Pfeile (Für den Desktop, wenn man mit der Maus drüber fährt) */}
                 {images.length > 1 && (
                   <>
                     <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl px-2 z-[40]">
@@ -230,7 +221,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setIsLightboxOpen(false)}
+            onClick={() => setIsLightboxOpen(false)} // Klick auf den Hintergrund schließt die Lightbox
             className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           >
             <AnimatePresence initial={false} custom={direction}>
@@ -239,12 +230,11 @@ export default function Home() {
                 custom={direction}
                 variants={sliderVariants}
                 initial="enter"
-                animate={{ zIndex: 1, x: 0, opacity: 1 }} // Hier voll sichtbar
+                animate={{ zIndex: 1, x: 0, opacity: 1 }} 
                 exit="exit"
                 transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
                 src={images[currentIndex].url} 
-                className="absolute max-w-full max-h-full object-contain shadow-2xl" 
-                // Auch in der Lightbox wischbar!
+                className="absolute max-w-full max-h-full object-contain shadow-2xl cursor-grab active:cursor-grabbing" 
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={1}
@@ -256,21 +246,30 @@ export default function Home() {
                     paginate(-1);
                   }
                 }}
+                onClick={(e) => e.stopPropagation()} // WICHTIG: Verhindert, dass der Klick auf das Bild die Lightbox schließt
               />
             </AnimatePresence>
 
             {images.length > 1 && (
               <>
-                <button onClick={prevImage} className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[210]">
+                <button 
+                  onClick={prevImage} 
+                  className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[210] cursor-pointer"
+                >
                   &#8249;
                 </button>
-                <button onClick={nextImage} className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[210]">
+                <button 
+                  onClick={nextImage} 
+                  className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[210] cursor-pointer"
+                >
                   &#8250;
                 </button>
               </>
             )}
 
-            <p className="absolute bottom-8 text-white/30 tracking-[0.5em] uppercase text-[10px]">Close</p>
+            <p className="absolute bottom-8 text-white/30 tracking-[0.5em] uppercase text-[10px] pointer-events-none">
+              Click background to close
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
