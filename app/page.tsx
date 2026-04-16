@@ -28,7 +28,7 @@ const sliderVariants = {
   center: {
     zIndex: 1,
     x: 0,
-    opacity: 0.85, // Leicht transparent für den Sucher-Look
+    opacity: 0.85,
   },
   exit: (direction: number) => ({
     zIndex: 0,
@@ -134,14 +134,13 @@ export default function Home() {
             playsInline
           />
 
-          {/* VORSCHAU: RECHTECKIG & OHNE SCHATTENRAND */}
+          {/* VORSCHAU */}
           <AnimatePresence>
             {currentSection && images.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                // Der schwarze Schattenrand wurde hier entfernt (shadow-inset gelöscht)
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35vw] max-w-[350px] aspect-[4/3] rounded-[30px] overflow-hidden z-30 pointer-events-auto group flex items-center justify-center"
               >
                 <AnimatePresence initial={false} custom={direction}>
@@ -179,7 +178,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 2. DYNAMISCHES LAYOUT & NAVIGATION AM UNTEREN RAND */}
+      {/* 2. DYNAMISCHES LAYOUT */}
       <div className="relative z-50 w-full h-screen pointer-events-none">
         <AnimatePresence mode="wait">
           {!currentSection ? (
@@ -213,25 +212,29 @@ export default function Home() {
                 </h2>
               </div>
 
-              {/* NAVIGATIONSPFEILE AM UNTEREN RAND */}
-              <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-16 pointer-events-auto">
+              {/* GRUPPIERTE NAVIGATION (Pfeile & Zurück-Button) AM UNTEREN BILDSCHIRMRAND */}
+              <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-auto z-[60]">
+                {/* Pfeile */}
+                <div className="flex items-center gap-16">
+                  <button 
+                    onClick={prevImage} 
+                    className="text-white/30 hover:text-white transition-colors text-5xl font-light px-4 py-2 cursor-pointer"
+                  >
+                    ‹
+                  </button>
+                  <button 
+                    onClick={nextImage} 
+                    className="text-white/30 hover:text-white transition-colors text-5xl font-light px-4 py-2 cursor-pointer"
+                  >
+                    ›
+                  </button>
+                </div>
+                
+                {/* Zurück Button */}
                 <button 
-                  onClick={prevImage} 
-                  className="text-white/20 hover:text-white transition-all text-4xl font-light px-4 py-2"
+                  onClick={() => handleNavigation(null)} 
+                  className="bg-transparent border-none text-white/20 hover:text-white transition-all text-[11px] tracking-[0.5em] uppercase cursor-pointer py-2"
                 >
-                  ‹
-                </button>
-                <button 
-                  onClick={nextImage} 
-                  className="text-white/20 hover:text-white transition-all text-4xl font-light px-4 py-2"
-                >
-                  ›
-                </button>
-              </div>
-
-              {/* ZURÜCK BUTTON */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto">
-                <button onClick={() => handleNavigation(null)} className="bg-transparent border-none text-white/10 hover:text-white transition-all text-[10px] tracking-[1em] uppercase cursor-pointer py-4">
                   [ Back to Menu ]
                 </button>
               </div>
@@ -278,7 +281,6 @@ export default function Home() {
               </AnimatePresence>
             </div>
 
-            {/* Lightbox Navigation bleibt für Desktop-User an den Seiten */}
             {images.length > 1 && (
               <>
                 <button onClick={prevImage} className="hidden md:block absolute left-8 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors text-6xl px-4 py-8 z-[1000] cursor-pointer">
