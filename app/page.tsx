@@ -14,12 +14,38 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const playfair = Playfair_Display({ subsets: ["latin"] });
 const geist = Geist({ subsets: ["latin"] });
 
+// --- SWIPE LOGIK (Für das Wischen am Handy) ---
+const swipeConfidenceThreshold = 10000;
+const swipePower = (offset: number, velocity: number) => {
+  return Math.abs(offset) * velocity;
+};
+
+// Animation für den Bildwechsel (Filmstreifen-Effekt)
+const sliderVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 300 : -300,
+    opacity: 0,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 0.8, // Behält die Transparenz für den Sucher-Look
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 300 : -300,
+    opacity: 0,
+  }),
+};
+
 export default function Home() {
   const [currentSection, setCurrentSection] = useState<string | null>(null);
-  // Typisierung für Vercel angepasst (statt any)
   const [images, setImages] = useState<Record<string, any>[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  
+  // Neuer State für die Wisch-Richtung (Filmstreifen slidet nach links oder rechts)
+  const [direction, setDirection] = useState(0);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -61,21 +87,27 @@ export default function Home() {
     }, 200); 
   };
 
+  // Hilfsfunktion zum Wechseln der Bilder mit Richtung
+  const paginate = (newDirection: number) => {
+    setDirection(newDirection);
+    setCurrentIndex((prev) => (prev + newDirection + images.length) % images.length);
+  };
+
   const nextImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+    paginate(1);
   };
 
   const prevImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    paginate(-1);
   };
 
   return (
     <main className={`${geist.className} relative min-h-screen bg-black overflow-hidden flex items-center justify-center`}>
       <audio ref={audioRef} src="/shutter.mp4" preload="auto" />
 
-      {/* 1. DER SUCHER (Basis-Hintergrund mit Video) */}
+      {/* 1. DER SUCHER */}
       <div className="fixed inset-0 z-0 flex items-center justify-center bg-black p-4">
         <div className="relative w-full h-full max-w-[1600px] max-h-[900px] flex items-center justify-center">
           
@@ -89,28 +121,56 @@ export default function Home() {
             playsInline
           />
 
-          {/* VORSCHAU: RECHTECKIG MIT ABGERUNDETEN ECKEN */}
+          {/* VORSCHAU: KLEINER & WISCHBAR */}
           <AnimatePresence>
             {currentSection && images.length > 0 && !isLightboxOpen && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[45vw] max-w-[450px] aspect-[4/3] rounded-[40px] overflow-hidden z-30 pointer-events-auto group shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]"
+                // Verkleinert auf w-[35vw] und max-w-[350px]
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35vw] max-w-[350px] aspect-[4/3] rounded-[30px] overflow-hidden z-30 pointer-events-auto group shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] flex items-center justify-center"
               >
-                <img 
-                  src={images[currentIndex].url} 
-                  alt="Preview"
-                  onClick={() => setIsLightboxOpen(true)}
-                  className="w-full h-full object-cover scale-110 opacity-80 grayscale mix-blend-multiply cursor-zoom-in transition-transform duration-700 hover:scale-[1.2]"
-                />
+                {/* BILD-CAROUSEL MIT WIE-EFFEKT */}
+                <AnimatePresence initial={false} custom={direction}>
+                  <motion.img 
+                    key={currentIndex}
+                    src={images[currentIndex].url} 
+                    alt="Preview"
+                    custom={direction}
+                    variants={sliderVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{
+                      x: { type: "spring", stiffness: 300, damping: 30 },
+                      opacity: { duration: 0.2 }
+                    }}
+                    // Wisch-Gesten Einstellungen
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={1}
+                    onDragEnd={(e, { offset, velocity }) => {
+                      const swipe = swipePower(offset.x, velocity.x);
+                      if (swipe < -swipeConfidenceThreshold) {
+                        paginate(1); // Nach links wischen = nächstes Bild
+                      } else if (swipe > swipeConfidenceThreshold) {
+                        paginate(-1); // Nach rechts wischen = vorheriges Bild
+                      }
+                    }}
+                    onClick={() => setIsLightboxOpen(true)}
+                    // cursor-grab für den Desktop-Mauszeiger
+                    className="absolute w-full h-full object-cover scale-110 grayscale mix-blend-multiply cursor-grab active:cursor-grabbing"
+                  />
+                </AnimatePresence>
 
+                {/* Pfeile (Für den Desktop, wenn man mit der Maus drüber fährt) */}
                 {images.length > 1 && (
                   <>
-                    <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity text-3xl px-2">
+                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl px-2 z-[40]">
                       &#8249;
                     </button>
-                    <button onClick={nextImage} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity text-3xl px-2">
+                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl px-2 z-[40]">
                       &#8250;
                     </button>
                   </>
@@ -121,7 +181,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 2. DYNAMISCHES LAYOUT */}
+      {/* 2. DYNAMISCHES LAYOUT (Texte & Menü) */}
       <div className="relative z-50 w-full h-screen pointer-events-none">
         <AnimatePresence mode="wait">
           {!currentSection ? (
@@ -173,20 +233,38 @@ export default function Home() {
             onClick={() => setIsLightboxOpen(false)}
             className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           >
-            <motion.img 
-              key={currentIndex} 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              src={images[currentIndex].url} 
-              className="max-w-full max-h-full object-contain shadow-2xl" 
-            />
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.img 
+                key={currentIndex} 
+                custom={direction}
+                variants={sliderVariants}
+                initial="enter"
+                animate={{ zIndex: 1, x: 0, opacity: 1 }} // Hier voll sichtbar
+                exit="exit"
+                transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+                src={images[currentIndex].url} 
+                className="absolute max-w-full max-h-full object-contain shadow-2xl" 
+                // Auch in der Lightbox wischbar!
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={1}
+                onDragEnd={(e, { offset, velocity }) => {
+                  const swipe = swipePower(offset.x, velocity.x);
+                  if (swipe < -swipeConfidenceThreshold) {
+                    paginate(1);
+                  } else if (swipe > swipeConfidenceThreshold) {
+                    paginate(-1);
+                  }
+                }}
+              />
+            </AnimatePresence>
 
             {images.length > 1 && (
               <>
-                <button onClick={prevImage} className="absolute left-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8">
+                <button onClick={prevImage} className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[210]">
                   &#8249;
                 </button>
-                <button onClick={nextImage} className="absolute right-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8">
+                <button onClick={nextImage} className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors text-6xl px-4 py-8 z-[210]">
                   &#8250;
                 </button>
               </>
