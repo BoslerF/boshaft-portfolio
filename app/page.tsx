@@ -125,10 +125,15 @@ export default function Home() {
                 </h1>
               </div>
 
-              {/* Navigation inklusive 'Kontakt' */}
+              {/* Navigation inklusive 'Kontakt' mit Extra-Abstand */}
               <nav className="absolute right-[8vw] top-1/2 -translate-y-1/2 flex flex-col gap-6 items-end pointer-events-auto">
                 {['Street', 'Portrait', 'Event', 'Landscape', 'Kontakt'].map((item) => (
-                  <button key={item} onClick={() => handleNavigation(item)} className="bg-transparent border-none p-0 group cursor-pointer outline-none">
+                  <button 
+                    key={item} 
+                    onClick={() => handleNavigation(item)} 
+                    // Wenn der Item-Name 'Kontakt' ist, fügen wir 'mt-8' (margin-top) hinzu
+                    className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-8' : ''}`}
+                  >
                     <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
                       {item}
                     </span>
@@ -141,23 +146,20 @@ export default function Home() {
             /* --- KONTAKTSEITE --- */
             <motion.div key="kontakt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-center text-center">
               
-              {/* Name */}
-              <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-6`}>
+              <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-8`}>
                 Felix Bosler
               </h1>
               
-              {/* E-Mail (klickbar) */}
-              <a href="mailto:boshaft@icloud.com" className="text-white/60 hover:text-white transition-colors text-lg md:text-xl tracking-[0.2em] font-light mb-12">
+              <a href="mailto:boshaft@icloud.com" className="text-white/60 hover:text-white transition-colors text-lg md:text-xl tracking-[0.2em] font-light mb-6">
                 boshaft@icloud.com
               </a>
               
-              {/* Subtext */}
               <p className="text-white/30 tracking-[0.4em] uppercase text-xs md:text-sm">
                 Melde dich gerne bei mir.
               </p>
 
-              {/* Back Button */}
-              <div className="absolute bottom-12 left-1/2 -translate-x-1/2">
+              {/* Back Button - jetzt "fixed" am unteren Rand festgemacht */}
+              <div className="fixed bottom-12 left-1/2 -translate-x-1/2">
                 <button 
                   onClick={() => handleNavigation(null)} 
                   className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40 bg-transparent cursor-pointer"
@@ -236,7 +238,6 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-8 md:p-16 cursor-zoom-out"
           >
-            {/* Hintergrund-Layer fürs Schließen */}
             <div 
               className="absolute inset-0 bg-black/70 backdrop-blur-2xl" 
               onClick={() => setIsLightboxOpen(false)} 
