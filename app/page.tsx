@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Playfair_Display, Geist } from "next/font/google";
 import { createClient } from "@supabase/supabase-js";
 
-// Supabase Client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -44,7 +43,6 @@ export default function Home() {
   }, [currentSection]);
 
   const handleNavigation = (section: string | null) => {
-    // Shutter-Effekt auslösen
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => {});
@@ -54,7 +52,6 @@ export default function Home() {
       videoRef.current.play().catch(() => {});
     }
 
-    // Verzögerung: Wir warten 250ms, bis die Blende im Video zu ist, dann wechseln wir
     setTimeout(() => { 
       setCurrentSection(section); 
     }, 250); 
@@ -74,13 +71,11 @@ export default function Home() {
     <main className={`${geist.className} relative min-h-screen bg-black overflow-hidden flex items-center justify-center`}>
       <audio ref={audioRef} src="/shutter.mp4" preload="auto" />
 
-      {/* 1. DER SUCHER (Video als Rahmen, nur sichtbar wenn KEINE Sektion gewählt ist) */}
+      {/* 1. DER SUCHER (Nur Startseite) */}
       <AnimatePresence>
         {!currentSection && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-10 flex items-center justify-center bg-black p-4"
           >
             <div className="relative w-full h-full max-w-[1600px] max-h-[900px] flex items-center justify-center">
@@ -98,18 +93,12 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* 2. INHALT (Menü oder Galerie) */}
+      {/* 2. INHALT */}
       <div className="relative z-50 w-full h-screen">
         <AnimatePresence mode="wait">
           {!currentSection ? (
-            /* STARTSEITE MENÜ */
-            <motion.div 
-              key="home" 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              className="w-full h-full relative"
-            >
+            /* STARTSEITE */
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative">
               <div className="absolute top-[20vh] left-1/2 -translate-x-1/2 text-center pointer-events-none">
                 <h1 className={`${playfair.className} text-white text-6xl md:text-8xl tracking-[0.4em] font-bold italic uppercase`}>
                   BOSHAFT
@@ -127,51 +116,59 @@ export default function Home() {
               </nav>
             </motion.div>
           ) : (
-            /* KATEGORIESEITE - Puristisch auf Schwarz */
-            <motion.div 
-              key="section" 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-center"
-            >
-              {/* Titel oben */}
-              <div className="absolute top-12 left-12 flex flex-col gap-1 z-50">
-                <h1 className={`${playfair.className} text-white/20 text-xl tracking-[0.5em] font-bold italic uppercase`}>
+            /* KATEGORIESEITE */
+            <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black">
+              
+              {/* Titel: Oben Links platziert */}
+              <div className="absolute top-8 left-8 md:top-12 md:left-12 flex flex-col gap-1 z-50">
+                <h1 className={`${playfair.className} text-white/20 text-lg md:text-xl tracking-[0.5em] font-bold italic uppercase`}>
                   BOSHAFT
                 </h1>
-                <h2 className={`${playfair.className} text-white/90 text-4xl md:text-6xl uppercase tracking-widest italic`}>
+                <h2 className={`${playfair.className} text-white/90 text-3xl md:text-5xl uppercase tracking-widest italic`}>
                   {currentSection}
                 </h2>
               </div>
 
-              {/* Bild-Präsentation */}
-              <div className="relative w-full h-full flex items-center justify-center p-6 md:p-20">
+              {/* Back Button: Über den Bildern */}
+              <div className="absolute top-8 right-8 md:top-12 md:right-12 z-50">
+                <button 
+                  onClick={() => handleNavigation(null)} 
+                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-4 py-2 hover:border-white/40"
+                >
+                  [ Back to Menu ]
+                </button>
+              </div>
+
+              {/* Galerie Bereich */}
+              <div className="relative w-full h-full flex items-center justify-center p-6">
                 {images.length > 0 && (
                   <img 
                     src={images[currentIndex].url} 
                     alt="Gallery"
                     onClick={() => setIsLightboxOpen(true)}
-                    className="max-w-full max-h-[75vh] object-contain shadow-2xl cursor-zoom-in transition-all duration-500"
+                    className="max-w-full max-h-[80vh] object-contain shadow-2xl cursor-zoom-in"
                   />
                 )}
 
-                {/* Navigation am unteren Rand der Galerie-Sektion */}
-                <div className="absolute bottom-24 flex items-center gap-12">
-                  <button onClick={prevImage} className="text-white/20 hover:text-white text-5xl px-4 py-2 transition-all select-none">‹</button>
-                  <button onClick={nextImage} className="text-white/20 hover:text-white text-5xl px-4 py-2 transition-all select-none">›</button>
-                </div>
+                {/* Seitliche Pfeile */}
+                {images.length > 1 && (
+                  <>
+                    <button 
+                      onClick={prevImage} 
+                      className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/20 hover:text-white text-6xl md:text-8xl p-4 transition-all z-50 select-none"
+                    >
+                      ‹
+                    </button>
+                    <button 
+                      onClick={nextImage} 
+                      className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/20 hover:text-white text-6xl md:text-8xl p-4 transition-all z-50 select-none"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
               </div>
 
-              {/* Back to Menu */}
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-                <button 
-                  onClick={() => handleNavigation(null)} 
-                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[1em] uppercase py-4"
-                >
-                  [ Back ]
-                </button>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -183,17 +180,21 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setIsLightboxOpen(false)} 
-            className="fixed inset-0 z-[100] bg-black/98 flex items-center justify-center p-4 cursor-zoom-out"
+            className="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 cursor-zoom-out"
           >
             <img 
               src={images[currentIndex].url} 
               className="max-w-full max-h-full object-contain" 
               onClick={(e) => e.stopPropagation()} 
             />
-            <p className="absolute bottom-8 text-white/20 tracking-[0.5em] uppercase text-[10px]">Close</p>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Copyright */}
+      <div className="fixed bottom-8 right-8 z-[60] opacity-10 pointer-events-none">
+        <p className="text-[10px] tracking-[1em] uppercase text-white">© 2026</p>
+      </div>
     </main>
   );
 }
