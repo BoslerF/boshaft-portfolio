@@ -157,13 +157,12 @@ export default function Home() {
               {/* Galerie Container */}
               <div className="flex-1 flex items-center justify-center relative px-4 md:px-24 pb-12 w-full overflow-hidden">
                 {images.length > 1 && (
-                  <button onClick={prevImage} className="text-white/20 hover:text-white text-5xl md:text-7xl transition-all z-50 select-none bg-transparent border-none px-4 md:px-8 cursor-pointer">
+                  <button onClick={(e) => {e.stopPropagation(); prevImage();}} className="text-white/20 hover:text-white text-5xl md:text-7xl transition-all z-50 select-none bg-transparent border-none px-4 md:px-8 cursor-pointer">
                     ‹
                   </button>
                 )}
 
                 {images.length > 0 && (
-                  /* Container lässt dem Bild maximal 60vh Höhe, erzwingt aber keine feste Breite mehr */
                   <div className="relative flex-1 h-[60vh] flex items-center justify-center">
                     <motion.img 
                       key={currentIndex}
@@ -178,14 +177,13 @@ export default function Home() {
                         if (info.offset.x < -50) nextImage();
                         if (info.offset.x > 50) prevImage();
                       }}
-                      // max-w-full und max-h-full plus object-contain sichern Format und Proportionen
                       className="max-w-full max-h-full object-contain shadow-2xl transition-all cursor-zoom-in touch-none"
                     />
                   </div>
                 )}
 
                 {images.length > 1 && (
-                  <button onClick={nextImage} className="text-white/20 hover:text-white text-5xl md:text-7xl transition-all z-50 select-none bg-transparent border-none px-4 md:px-8 cursor-pointer">
+                  <button onClick={(e) => {e.stopPropagation(); nextImage();}} className="text-white/20 hover:text-white text-5xl md:text-7xl transition-all z-50 select-none bg-transparent border-none px-4 md:px-8 cursor-pointer">
                     ›
                   </button>
                 )}
@@ -202,22 +200,19 @@ export default function Home() {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-8 md:p-16 cursor-zoom-out"
+            // Das Klick-Event liegt jetzt GANZ außen. Jeder Klick auf diesen Hintergrund schließt die Lightbox.
+            onClick={() => setIsLightboxOpen(false)} 
+            // backdrop-blur-2xl erzeugt die starke Unschärfe, bg-black/70 dunkelt es angenehm ab
+            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-2xl flex items-center justify-center p-8 md:p-16 cursor-zoom-out"
           >
-            {/* 1. SEPARATER HINTERGRUND-LAYER: Ist nur fürs Schließen zuständig */}
-            <div 
-              className="absolute inset-0 bg-black/60 backdrop-blur-2xl" 
-              onClick={() => setIsLightboxOpen(false)} 
-            />
-
-            {/* 2. DAS BILD: Liegt eine Ebene über dem Hintergrund (z-10) */}
             <motion.img 
               key={currentIndex}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               src={images[currentIndex].url} 
-              // max-h-[85vh] lässt dem Bild super viel Raum nach oben/unten (perfekt für Hochformat)
-              className="relative z-10 max-w-[90vw] max-h-[85vh] object-contain shadow-[0_0_50px_rgba(0,0,0,0.5)] touch-none cursor-default" 
+              className="relative z-10 max-w-[90vw] max-h-[85vh] object-contain shadow-[0_0_80px_rgba(0,0,0,0.8)] touch-none cursor-default" 
+              // e.stopPropagation() verhindert, dass der Klick auf das Bild an den Hintergrund weitergegeben wird!
+              onClick={(e) => e.stopPropagation()} 
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               onDragEnd={(e, info) => {
