@@ -117,55 +117,62 @@ export default function Home() {
             </motion.div>
           ) : (
             /* KATEGORIESEITE */
-            <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black">
+            <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
               
-              {/* Titel: Oben Links platziert */}
-              <div className="absolute top-8 left-8 md:top-12 md:left-12 flex flex-col gap-1 z-50">
+              {/* Header: Oben Links */}
+              <div className="p-8 md:p-12 flex flex-col gap-1">
                 <h1 className={`${playfair.className} text-white/20 text-lg md:text-xl tracking-[0.5em] font-bold italic uppercase`}>
                   BOSHAFT
                 </h1>
-                <h2 className={`${playfair.className} text-white/90 text-3xl md:text-5xl uppercase tracking-widest italic`}>
+                <h2 className={`${playfair.className} text-white/90 text-3xl md:text-5xl uppercase tracking-widest italic leading-tight`}>
                   {currentSection}
                 </h2>
               </div>
 
-              {/* Back Button: Über den Bildern */}
-              <div className="absolute top-8 right-8 md:top-12 md:right-12 z-50">
+              {/* Back Button: Separiert über dem Galerie-Container */}
+              <div className="flex justify-center mb-4">
                 <button 
                   onClick={() => handleNavigation(null)} 
-                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-4 py-2 hover:border-white/40"
+                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40"
                 >
                   [ Back to Menu ]
                 </button>
               </div>
 
-              {/* Galerie Bereich */}
-              <div className="relative w-full h-full flex items-center justify-center p-6">
-                {images.length > 0 && (
-                  <img 
-                    src={images[currentIndex].url} 
-                    alt="Gallery"
-                    onClick={() => setIsLightboxOpen(true)}
-                    className="max-w-full max-h-[80vh] object-contain shadow-2xl cursor-zoom-in"
-                  />
+              {/* Galerie Bereich: Zentriert mit Pfeilen daneben */}
+              <div className="flex-1 flex items-center justify-center relative px-12 md:px-24 pb-12">
+                
+                {/* Linker Pfeil */}
+                {images.length > 1 && (
+                  <button 
+                    onClick={prevImage} 
+                    className="text-white/20 hover:text-white text-5xl md:text-7xl p-4 transition-all z-50 select-none mr-4 md:mr-10"
+                  >
+                    ‹
+                  </button>
                 )}
 
-                {/* Seitliche Pfeile */}
+                {/* Bildvorschau: Kleiner skaliert */}
+                {images.length > 0 && (
+                  <div className="relative max-w-[70vw] max-h-[60vh] flex items-center justify-center">
+                    <img 
+                      src={images[currentIndex].url} 
+                      alt="Gallery"
+                      onClick={() => setIsLightboxOpen(true)}
+                      // cursor-default entfernt die Lupe
+                      className="max-w-full max-h-full object-contain shadow-2xl cursor-default transition-all"
+                    />
+                  </div>
+                )}
+
+                {/* Rechter Pfeil */}
                 {images.length > 1 && (
-                  <>
-                    <button 
-                      onClick={prevImage} 
-                      className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/20 hover:text-white text-6xl md:text-8xl p-4 transition-all z-50 select-none"
-                    >
-                      ‹
-                    </button>
-                    <button 
-                      onClick={nextImage} 
-                      className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/20 hover:text-white text-6xl md:text-8xl p-4 transition-all z-50 select-none"
-                    >
-                      ›
-                    </button>
-                  </>
+                  <button 
+                    onClick={nextImage} 
+                    className="text-white/20 hover:text-white text-5xl md:text-7xl p-4 transition-all z-50 select-none ml-4 md:ml-10"
+                  >
+                    ›
+                  </button>
                 )}
               </div>
 
@@ -174,24 +181,28 @@ export default function Home() {
         </AnimatePresence>
       </div>
 
-      {/* 3. LIGHTBOX */}
+      {/* 3. DETAILANSICHT (Lightbox) */}
       <AnimatePresence>
         {isLightboxOpen && images.length > 0 && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setIsLightboxOpen(false)} 
-            className="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 cursor-zoom-out"
+            onClick={() => setIsLightboxOpen(false)} // Schließt beim Klick außerhalb
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-8 md:p-20 cursor-pointer"
           >
-            <img 
-              src={images[currentIndex].url} 
-              className="max-w-full max-h-full object-contain" 
-              onClick={(e) => e.stopPropagation()} 
-            />
+            <div className="relative max-w-[85vw] max-h-[85vh] flex items-center justify-center">
+              <img 
+                src={images[currentIndex].url} 
+                className="max-w-full max-h-full object-contain cursor-default shadow-2xl" 
+                onClick={(e) => e.stopPropagation()} // Verhindert Schließen bei Klick AUF das Bild
+              />
+            </div>
+            <p className="absolute bottom-6 text-white/10 tracking-[1em] uppercase text-[9px] pointer-events-none">
+              Click outside to close
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Copyright */}
       <div className="fixed bottom-8 right-8 z-[60] opacity-10 pointer-events-none">
         <p className="text-[10px] tracking-[1em] uppercase text-white">© 2026</p>
       </div>
