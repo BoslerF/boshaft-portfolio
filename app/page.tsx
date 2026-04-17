@@ -49,7 +49,7 @@ export default function Home() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []); // Nur beim Mounten registrieren
+  }, []);
 
   useEffect(() => {
     async function fetchImages() {
@@ -154,15 +154,17 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="flex-1 flex items-center justify-center relative px-12 md:px-24 pb-20 overflow-hidden">
+              {/* Galerie Container */}
+              <div className="flex-1 flex items-center justify-center relative px-4 md:px-24 pb-12 w-full overflow-hidden">
                 {images.length > 1 && (
-                  <button onClick={(e) => {e.stopPropagation(); prevImage();}} className="text-white/20 hover:text-white text-6xl md:text-8xl transition-all z-50 select-none bg-transparent border-none mx-6 md:mx-12 cursor-pointer">
+                  <button onClick={prevImage} className="text-white/20 hover:text-white text-5xl md:text-7xl transition-all z-50 select-none bg-transparent border-none px-4 md:px-8 cursor-pointer">
                     ‹
                   </button>
                 )}
 
                 {images.length > 0 && (
-                  <div className="relative w-[50vw] h-[50vh] flex items-center justify-center">
+                  /* Container lässt dem Bild maximal 60vh Höhe, erzwingt aber keine feste Breite mehr */
+                  <div className="relative flex-1 h-[60vh] flex items-center justify-center">
                     <motion.img 
                       key={currentIndex}
                       initial={{ opacity: 0, x: 20 }}
@@ -170,20 +172,20 @@ export default function Home() {
                       src={images[currentIndex].url} 
                       alt="Gallery"
                       onClick={() => setIsLightboxOpen(true)}
-                      // Swipe Funktionalität für Handy
                       drag="x"
                       dragConstraints={{ left: 0, right: 0 }}
                       onDragEnd={(e, info) => {
                         if (info.offset.x < -50) nextImage();
                         if (info.offset.x > 50) prevImage();
                       }}
-                      className="max-w-full max-h-full object-contain shadow-2xl transition-all cursor-pointer touch-none"
+                      // max-w-full und max-h-full plus object-contain sichern Format und Proportionen
+                      className="max-w-full max-h-full object-contain shadow-2xl transition-all cursor-zoom-in touch-none"
                     />
                   </div>
                 )}
 
                 {images.length > 1 && (
-                  <button onClick={(e) => {e.stopPropagation(); nextImage();}} className="text-white/20 hover:text-white text-6xl md:text-8xl transition-all z-50 select-none bg-transparent border-none mx-6 md:mx-12 cursor-pointer">
+                  <button onClick={nextImage} className="text-white/20 hover:text-white text-5xl md:text-7xl transition-all z-50 select-none bg-transparent border-none px-4 md:px-8 cursor-pointer">
                     ›
                   </button>
                 )}
@@ -200,29 +202,29 @@ export default function Home() {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            onClick={() => setIsLightboxOpen(false)} 
-            // Hier ist der Blur-Effekt: bg-black/60 macht es leicht durchsichtig, backdrop-blur-2xl macht es unscharf
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-2xl flex items-center justify-center p-8 md:p-16 cursor-zoom-out"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-8 md:p-16 cursor-zoom-out"
           >
-            {/* Hier wird die Größe begrenzt: max-w-[65vw] und max-h-[65vh] */}
-            <div className="relative max-w-[65vw] max-h-[65vh] flex items-center justify-center">
-              <motion.img 
-                key={currentIndex}
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                src={images[currentIndex].url} 
-                // cursor-default verhindert, dass das Bild selbst wie ein Schließen-Button wirkt
-                className="max-w-full max-h-full object-contain shadow-[0_0_50px_rgba(0,0,0,0.5)] touch-none cursor-default" 
-                onClick={(e) => e.stopPropagation()} 
-                // Swipe auch in der Detailansicht
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                onDragEnd={(e, info) => {
-                  if (info.offset.x < -100) nextImage();
-                  if (info.offset.x > 100) prevImage();
-                }}
-              />
-            </div>
+            {/* 1. SEPARATER HINTERGRUND-LAYER: Ist nur fürs Schließen zuständig */}
+            <div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-2xl" 
+              onClick={() => setIsLightboxOpen(false)} 
+            />
+
+            {/* 2. DAS BILD: Liegt eine Ebene über dem Hintergrund (z-10) */}
+            <motion.img 
+              key={currentIndex}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              src={images[currentIndex].url} 
+              // max-h-[85vh] lässt dem Bild super viel Raum nach oben/unten (perfekt für Hochformat)
+              className="relative z-10 max-w-[90vw] max-h-[85vh] object-contain shadow-[0_0_50px_rgba(0,0,0,0.5)] touch-none cursor-default" 
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onDragEnd={(e, info) => {
+                if (info.offset.x < -100) nextImage();
+                if (info.offset.x > 100) prevImage();
+              }}
+            />
           </motion.div>
         )}
       </AnimatePresence>
