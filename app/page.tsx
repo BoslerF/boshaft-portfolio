@@ -119,8 +119,8 @@ export default function Home() {
             /* KATEGORIESEITE */
             <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
               
-              {/* Header: Oben Links */}
-              <div className="p-8 md:p-12 flex flex-col gap-1">
+              {/* Header: Mehr Abstand zum Rand (p-12 md:p-16) */}
+              <div className="p-12 md:p-16 flex flex-col gap-1">
                 <h1 className={`${playfair.className} text-white/20 text-lg md:text-xl tracking-[0.5em] font-bold italic uppercase`}>
                   BOSHAFT
                 </h1>
@@ -129,47 +129,46 @@ export default function Home() {
                 </h2>
               </div>
 
-              {/* Back Button: Separiert über dem Galerie-Container */}
-              <div className="flex justify-center mb-4">
+              {/* Back Button: Über der Galerie */}
+              <div className="flex justify-center mb-6">
                 <button 
                   onClick={() => handleNavigation(null)} 
-                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40"
+                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40 bg-transparent"
                 >
                   [ Back to Menu ]
                 </button>
               </div>
 
-              {/* Galerie Bereich: Zentriert mit Pfeilen daneben */}
-              <div className="flex-1 flex items-center justify-center relative px-12 md:px-24 pb-12">
+              {/* Galerie Bereich: Zentriert mit Abstand zum Rand */}
+              <div className="flex-1 flex items-center justify-center relative px-8 md:px-20 pb-20">
                 
-                {/* Linker Pfeil */}
+                {/* Linker Pfeil: Kein Hintergrund, mehr Abstand (mx-6) */}
                 {images.length > 1 && (
                   <button 
                     onClick={prevImage} 
-                    className="text-white/20 hover:text-white text-5xl md:text-7xl p-4 transition-all z-50 select-none mr-4 md:mr-10"
+                    className="text-white/20 hover:text-white text-6xl md:text-8xl transition-all z-50 select-none bg-transparent border-none mx-6 md:mx-12"
                   >
                     ‹
                   </button>
                 )}
 
-                {/* Bildvorschau: Kleiner skaliert */}
+                {/* Bildvorschau: max-h auf 55vh gesenkt, damit es nicht unten anstößt */}
                 {images.length > 0 && (
-                  <div className="relative max-w-[70vw] max-h-[60vh] flex items-center justify-center">
+                  <div className="relative max-w-[60vw] max-h-[55vh] flex items-center justify-center overflow-hidden">
                     <img 
                       src={images[currentIndex].url} 
                       alt="Gallery"
                       onClick={() => setIsLightboxOpen(true)}
-                      // cursor-default entfernt die Lupe
-                      className="max-w-full max-h-full object-contain shadow-2xl cursor-default transition-all"
+                      className="max-w-full max-h-full object-contain shadow-2xl cursor-pointer transition-all"
                     />
                   </div>
                 )}
 
-                {/* Rechter Pfeil */}
+                {/* Rechter Pfeil: Kein Hintergrund, mehr Abstand (mx-6) */}
                 {images.length > 1 && (
                   <button 
                     onClick={nextImage} 
-                    className="text-white/20 hover:text-white text-5xl md:text-7xl p-4 transition-all z-50 select-none ml-4 md:ml-10"
+                    className="text-white/20 hover:text-white text-6xl md:text-8xl transition-all z-50 select-none bg-transparent border-none mx-6 md:mx-12"
                   >
                     ›
                   </button>
@@ -186,19 +185,16 @@ export default function Home() {
         {isLightboxOpen && images.length > 0 && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setIsLightboxOpen(false)} // Schließt beim Klick außerhalb
-            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-8 md:p-20 cursor-pointer"
+            onClick={() => setIsLightboxOpen(false)} 
+            className="fixed inset-0 z-[100] bg-black/98 flex items-center justify-center p-12 md:p-24 cursor-pointer"
           >
-            <div className="relative max-w-[85vw] max-h-[85vh] flex items-center justify-center">
+            <div className="relative max-w-[80vw] max-h-[80vh] flex items-center justify-center">
               <img 
                 src={images[currentIndex].url} 
-                className="max-w-full max-h-full object-contain cursor-default shadow-2xl" 
-                onClick={(e) => e.stopPropagation()} // Verhindert Schließen bei Klick AUF das Bild
+                className="max-w-full max-h-full object-contain shadow-2xl" 
+                onClick={(e) => e.stopPropagation()} 
               />
             </div>
-            <p className="absolute bottom-6 text-white/10 tracking-[1em] uppercase text-[9px] pointer-events-none">
-              Click outside to close
-            </p>
           </motion.div>
         )}
       </AnimatePresence>
