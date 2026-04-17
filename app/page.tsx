@@ -22,6 +22,35 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Hilfsfunktionen für die Navigation
+  const nextImage = () => {
+    setImages((prevImages) => {
+      if (prevImages.length === 0) return prevImages;
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % prevImages.length);
+      return prevImages;
+    });
+  };
+
+  const prevImage = () => {
+    setImages((prevImages) => {
+      if (prevImages.length === 0) return prevImages;
+      setCurrentIndex((prevIndex) => (prevIndex - 1 + prevImages.length) % prevImages.length);
+      return prevImages;
+    });
+  };
+
+  // 1. Tastatur-Steuerung (Pfeiltasten)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") prevImage();
+      if (e.key === "Escape") setIsLightboxOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []); // Nur beim Mounten registrieren
+
   useEffect(() => {
     async function fetchImages() {
       if (currentSection) {
@@ -57,16 +86,6 @@ export default function Home() {
     }, 250); 
   };
 
-  const nextImage = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
   return (
     <main className={`${geist.className} relative min-h-screen bg-black overflow-hidden flex items-center justify-center`}>
       <audio ref={audioRef} src="/shutter.mp4" preload="auto" />
@@ -97,7 +116,6 @@ export default function Home() {
       <div className="relative z-50 w-full h-screen">
         <AnimatePresence mode="wait">
           {!currentSection ? (
-            /* STARTSEITE */
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative">
               <div className="absolute top-[20vh] left-1/2 -translate-x-1/2 text-center pointer-events-none">
                 <h1 className={`${playfair.className} text-white text-6xl md:text-8xl tracking-[0.4em] font-bold italic uppercase`}>
@@ -116,10 +134,8 @@ export default function Home() {
               </nav>
             </motion.div>
           ) : (
-            /* KATEGORIESEITE */
             <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
               
-              {/* Header: Mehr Abstand zum Rand (p-12 md:p-16) */}
               <div className="p-12 md:p-16 flex flex-col gap-1">
                 <h1 className={`${playfair.className} text-white/20 text-lg md:text-xl tracking-[0.5em] font-bold italic uppercase`}>
                   BOSHAFT
@@ -129,52 +145,49 @@ export default function Home() {
                 </h2>
               </div>
 
-              {/* Back Button: Über der Galerie */}
               <div className="flex justify-center mb-6">
                 <button 
                   onClick={() => handleNavigation(null)} 
-                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40 bg-transparent"
+                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40 bg-transparent cursor-pointer"
                 >
                   [ Back to Menu ]
                 </button>
               </div>
 
-              {/* Galerie Bereich: Zentriert mit Abstand zum Rand */}
-              <div className="flex-1 flex items-center justify-center relative px-8 md:px-20 pb-20">
-                
-                {/* Linker Pfeil: Kein Hintergrund, mehr Abstand (mx-6) */}
+              <div className="flex-1 flex items-center justify-center relative px-12 md:px-24 pb-20 overflow-hidden">
                 {images.length > 1 && (
-                  <button 
-                    onClick={prevImage} 
-                    className="text-white/20 hover:text-white text-6xl md:text-8xl transition-all z-50 select-none bg-transparent border-none mx-6 md:mx-12"
-                  >
+                  <button onClick={(e) => {e.stopPropagation(); prevImage();}} className="text-white/20 hover:text-white text-6xl md:text-8xl transition-all z-50 select-none bg-transparent border-none mx-6 md:mx-12 cursor-pointer">
                     ‹
                   </button>
                 )}
 
-                {/* Bildvorschau: max-h auf 55vh gesenkt, damit es nicht unten anstößt */}
                 {images.length > 0 && (
-                  <div className="relative max-w-[60vw] max-h-[55vh] flex items-center justify-center overflow-hidden">
-                    <img 
+                  <div className="relative w-[50vw] h-[50vh] flex items-center justify-center">
+                    <motion.img 
+                      key={currentIndex}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
                       src={images[currentIndex].url} 
                       alt="Gallery"
                       onClick={() => setIsLightboxOpen(true)}
-                      className="max-w-full max-h-full object-contain shadow-2xl cursor-pointer transition-all"
+                      // Swipe Funktionalität für Handy
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 0 }}
+                      onDragEnd={(e, info) => {
+                        if (info.offset.x < -50) nextImage();
+                        if (info.offset.x > 50) prevImage();
+                      }}
+                      className="max-w-full max-h-full object-contain shadow-2xl transition-all cursor-pointer touch-none"
                     />
                   </div>
                 )}
 
-                {/* Rechter Pfeil: Kein Hintergrund, mehr Abstand (mx-6) */}
                 {images.length > 1 && (
-                  <button 
-                    onClick={nextImage} 
-                    className="text-white/20 hover:text-white text-6xl md:text-8xl transition-all z-50 select-none bg-transparent border-none mx-6 md:mx-12"
-                  >
+                  <button onClick={(e) => {e.stopPropagation(); nextImage();}} className="text-white/20 hover:text-white text-6xl md:text-8xl transition-all z-50 select-none bg-transparent border-none mx-6 md:mx-12 cursor-pointer">
                     ›
                   </button>
                 )}
               </div>
-
             </motion.div>
           )}
         </AnimatePresence>
@@ -184,15 +197,27 @@ export default function Home() {
       <AnimatePresence>
         {isLightboxOpen && images.length > 0 && (
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
             onClick={() => setIsLightboxOpen(false)} 
-            className="fixed inset-0 z-[100] bg-black/98 flex items-center justify-center p-12 md:p-24 cursor-pointer"
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-12 md:p-24 cursor-pointer"
           >
             <div className="relative max-w-[80vw] max-h-[80vh] flex items-center justify-center">
-              <img 
+              <motion.img 
+                key={currentIndex}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 src={images[currentIndex].url} 
-                className="max-w-full max-h-full object-contain shadow-2xl" 
+                className="max-w-full max-h-full object-contain shadow-2xl touch-none" 
                 onClick={(e) => e.stopPropagation()} 
+                // Swipe auch in der Detailansicht
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={(e, info) => {
+                  if (info.offset.x < -100) nextImage();
+                  if (info.offset.x > 100) prevImage();
+                }}
               />
             </div>
           </motion.div>
