@@ -1,10 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Playfair_Display, Geist } from "next/font/google";
 import { createClient } from "@supabase/supabase-js";
-import Image from "next/image"; // NEU: Der Next.js Image Optimizer
+import Image from "next/image";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -22,6 +23,7 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Hilfsfunktionen für die Navigation
   const nextImage = () => {
     setImages((prevImages) => {
       if (prevImages.length === 0) return prevImages;
@@ -38,6 +40,7 @@ export default function Home() {
     });
   };
 
+  // Tastatur-Steuerung (Pfeiltasten)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") nextImage();
@@ -51,11 +54,16 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchImages() {
+      // Wenn wir in einer Galerie-Sektion sind (nicht Kontakt)
       if (currentSection && currentSection !== "Kontakt") {
+        
+        // MAPPING: Der Nutzer sieht "B/W", in der Datenbank suchen wir aber nach "BW"
+        const dbCategory = currentSection === "B/W" ? "BW" : currentSection;
+
         const { data, error } = await supabase
           .from("images")
           .select("*")
-          .eq("category", currentSection)
+          .eq("category", dbCategory)
           .order("created_at", { ascending: false });
 
         if (!error && data) {
@@ -88,7 +96,7 @@ export default function Home() {
     <main className={`${geist.className} relative min-h-screen bg-black overflow-hidden flex items-center justify-center`}>
       <audio ref={audioRef} src="/shutter.mp4" preload="auto" />
 
-      {/* 1. DER SUCHER */}
+      {/* 1. DER SUCHER (Nur Startseite) */}
       <AnimatePresence>
         {!currentSection && (
           <motion.div 
@@ -114,6 +122,7 @@ export default function Home() {
       <div className="relative z-50 w-full h-screen">
         <AnimatePresence mode="wait">
           {!currentSection ? (
+            /* --- STARTSEITE --- */
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative">
               <div className="absolute top-[20vh] left-1/2 -translate-x-1/2 text-center pointer-events-none">
                 <h1 className={`${playfair.className} text-white text-6xl md:text-8xl tracking-[0.4em] font-bold italic uppercase`}>
@@ -122,11 +131,12 @@ export default function Home() {
               </div>
 
               <nav className="absolute right-[8vw] top-1/2 -translate-y-1/2 flex flex-col gap-6 items-end pointer-events-auto">
-                {['Street', 'Portrait', 'Event', 'Landscape', 'Kontakt'].map((item) => (
+                {['Street', 'Portrait', 'Event', 'Landscape', 'B/W', 'Kontakt'].map((item) => (
                   <button 
                     key={item} 
                     onClick={() => handleNavigation(item)} 
-                    className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-8' : ''}`}
+                    // Hier wird der Abstand für "Kontakt" deutlich vergrößert (mt-16 wirkt wie eine Leerzeile)
+                    className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-16' : ''}`}
                   >
                     <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
                       {item}
@@ -137,6 +147,7 @@ export default function Home() {
             </motion.div>
             
           ) : currentSection === "Kontakt" ? (
+            /* --- KONTAKTSEITE --- */
             <motion.div key="kontakt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-center text-center">
               <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-8`}>
                 Felix Bosler
@@ -158,6 +169,7 @@ export default function Home() {
             </motion.div>
 
           ) : (
+            /* --- GALERIESEITE --- */
             <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
               
               <div className="p-12 md:p-16 flex flex-col gap-1">
@@ -200,13 +212,12 @@ export default function Home() {
                         if (info.offset.x > 50) prevImage();
                       }}
                     >
-                      {/* NEU: Optimiertes Next.js Image */}
                       <Image 
                         src={images[currentIndex].url} 
                         alt="Gallery"
                         fill
-                        priority={true} // Höchste Priorität beim Laden
-                        sizes="(max-width: 768px) 100vw, 70vw" // Sagt Next.js, welche Größe am ehesten benötigt wird
+                        priority={true}
+                        sizes="(max-width: 768px) 100vw, 70vw"
                         className="object-contain shadow-2xl pointer-events-none"
                       />
                     </motion.div>
@@ -251,7 +262,6 @@ export default function Home() {
                 if (info.offset.x > 100) prevImage();
               }}
             >
-              {/* NEU: Optimiertes Next.js Image für die Lightbox */}
               <Image 
                 src={images[currentIndex].url} 
                 alt="Fullscreen Gallery"
