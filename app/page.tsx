@@ -1,10 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Playfair_Display, Geist } from "next/font/google";
 import { createClient } from "@supabase/supabase-js";
+import Image from "next/image"; // NEU: Der Next.js Image Optimizer
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -22,7 +22,6 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Hilfsfunktionen für die Navigation
   const nextImage = () => {
     setImages((prevImages) => {
       if (prevImages.length === 0) return prevImages;
@@ -39,7 +38,6 @@ export default function Home() {
     });
   };
 
-  // 1. Tastatur-Steuerung (Pfeiltasten)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") nextImage();
@@ -51,7 +49,6 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Bilder nur laden, wenn eine Foto-Kategorie (nicht Kontakt) gewählt wurde
   useEffect(() => {
     async function fetchImages() {
       if (currentSection && currentSection !== "Kontakt") {
@@ -91,7 +88,7 @@ export default function Home() {
     <main className={`${geist.className} relative min-h-screen bg-black overflow-hidden flex items-center justify-center`}>
       <audio ref={audioRef} src="/shutter.mp4" preload="auto" />
 
-      {/* 1. DER SUCHER (Nur Startseite) */}
+      {/* 1. DER SUCHER */}
       <AnimatePresence>
         {!currentSection && (
           <motion.div 
@@ -117,7 +114,6 @@ export default function Home() {
       <div className="relative z-50 w-full h-screen">
         <AnimatePresence mode="wait">
           {!currentSection ? (
-            /* --- STARTSEITE --- */
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative">
               <div className="absolute top-[20vh] left-1/2 -translate-x-1/2 text-center pointer-events-none">
                 <h1 className={`${playfair.className} text-white text-6xl md:text-8xl tracking-[0.4em] font-bold italic uppercase`}>
@@ -125,13 +121,11 @@ export default function Home() {
                 </h1>
               </div>
 
-              {/* Navigation inklusive 'Kontakt' mit Extra-Abstand */}
               <nav className="absolute right-[8vw] top-1/2 -translate-y-1/2 flex flex-col gap-6 items-end pointer-events-auto">
                 {['Street', 'Portrait', 'Event', 'Landscape', 'Kontakt'].map((item) => (
                   <button 
                     key={item} 
                     onClick={() => handleNavigation(item)} 
-                    // Wenn der Item-Name 'Kontakt' ist, fügen wir 'mt-8' (margin-top) hinzu
                     className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-8' : ''}`}
                   >
                     <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
@@ -143,22 +137,16 @@ export default function Home() {
             </motion.div>
             
           ) : currentSection === "Kontakt" ? (
-            /* --- KONTAKTSEITE --- */
             <motion.div key="kontakt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-center text-center">
-              
               <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-8`}>
                 Felix Bosler
               </h1>
-              
               <a href="mailto:boshaft@icloud.com" className="text-white/60 hover:text-white transition-colors text-lg md:text-xl tracking-[0.2em] font-light mb-6">
                 boshaft@icloud.com
               </a>
-              
               <p className="text-white/30 tracking-[0.4em] uppercase text-xs md:text-sm">
                 Melde dich gerne bei mir.
               </p>
-
-              {/* Back Button - jetzt "fixed" am unteren Rand festgemacht */}
               <div className="fixed bottom-12 left-1/2 -translate-x-1/2">
                 <button 
                   onClick={() => handleNavigation(null)} 
@@ -170,7 +158,6 @@ export default function Home() {
             </motion.div>
 
           ) : (
-            /* --- GALERIESEITE (Street, Portrait, etc.) --- */
             <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
               
               <div className="p-12 md:p-16 flex flex-col gap-1">
@@ -200,12 +187,11 @@ export default function Home() {
 
                 {images.length > 0 && (
                   <div className="relative flex-1 h-[60vh] flex items-center justify-center">
-                    <motion.img 
+                    <motion.div
                       key={currentIndex}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      src={images[currentIndex].url} 
-                      alt="Gallery"
+                      className="relative w-full h-full cursor-zoom-in touch-none"
                       onClick={() => setIsLightboxOpen(true)}
                       drag="x"
                       dragConstraints={{ left: 0, right: 0 }}
@@ -213,8 +199,17 @@ export default function Home() {
                         if (info.offset.x < -50) nextImage();
                         if (info.offset.x > 50) prevImage();
                       }}
-                      className="max-w-full max-h-full object-contain shadow-2xl transition-all cursor-zoom-in touch-none"
-                    />
+                    >
+                      {/* NEU: Optimiertes Next.js Image */}
+                      <Image 
+                        src={images[currentIndex].url} 
+                        alt="Gallery"
+                        fill
+                        priority={true} // Höchste Priorität beim Laden
+                        sizes="(max-width: 768px) 100vw, 70vw" // Sagt Next.js, welche Größe am ehesten benötigt wird
+                        className="object-contain shadow-2xl pointer-events-none"
+                      />
+                    </motion.div>
                   </div>
                 )}
 
@@ -243,12 +238,11 @@ export default function Home() {
               onClick={() => setIsLightboxOpen(false)} 
             />
 
-            <motion.img 
+            <motion.div 
               key={currentIndex}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              src={images[currentIndex].url} 
-              className="relative z-10 max-w-[90vw] max-h-[85vh] object-contain shadow-[0_0_80px_rgba(0,0,0,0.8)] touch-none cursor-default" 
+              className="relative z-10 w-[90vw] h-[85vh] touch-none cursor-default" 
               onClick={(e) => e.stopPropagation()} 
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
@@ -256,7 +250,17 @@ export default function Home() {
                 if (info.offset.x < -100) nextImage();
                 if (info.offset.x > 100) prevImage();
               }}
-            />
+            >
+              {/* NEU: Optimiertes Next.js Image für die Lightbox */}
+              <Image 
+                src={images[currentIndex].url} 
+                alt="Fullscreen Gallery"
+                fill
+                priority={true}
+                sizes="90vw"
+                className="object-contain shadow-[0_0_80px_rgba(0,0,0,0.8)] pointer-events-none" 
+              />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
