@@ -128,43 +128,40 @@ export default function Home() {
               </div>
 
               <nav className="absolute right-[8vw] top-1/2 -translate-y-1/2 flex flex-col gap-6 items-end pointer-events-auto">
-                {/* Hier ist der 'spacer' in der Liste eingebaut */}
-                {['Street', 'Portrait', 'Event', 'Landscape', 'B/W', 'spacer', 'Kontakt'].map((item) => {
-                  
-                  // Wenn das Element der Spacer ist, rendern wir einfach ein unsichtbares Element
-                  if (item === 'spacer') {
-                    return <div key="spacer" className="h-4 md:h-6" aria-hidden="true" />;
-                  }
-
-                  // Ansonsten rendern wir den normalen Button
-                  return (
-                    <button 
-                      key={item} 
-                      onClick={() => handleNavigation(item)} 
-                      className="bg-transparent border-none p-0 group cursor-pointer outline-none"
-                    >
-                      <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
-                        {item}
-                      </span>
-                    </button>
-                  );
-                })}
+                {['Street', 'Portrait', 'Event', 'Landscape', 'B/W', 'Kontakt'].map((item) => (
+                  <button 
+                    key={item} 
+                    onClick={() => handleNavigation(item)} 
+                    // Hier bekommt Kontakt einen riesigen extra Abstand nach oben (mt-12 md:mt-16)
+                    className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-12 md:mt-16' : ''}`}
+                  >
+                    <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
+                      {item}
+                    </span>
+                  </button>
+                ))}
               </nav>
             </motion.div>
             
           ) : currentSection === "Kontakt" ? (
             /* --- KONTAKTSEITE --- */
             <motion.div key="kontakt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-center text-center">
-              <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-8`}>
-                Felix Bosler
-              </h1>
-              <a href="mailto:boshaft@icloud.com" className="text-white/60 hover:text-white transition-colors text-lg md:text-xl tracking-[0.2em] font-light mb-6">
-                boshaft@icloud.com
-              </a>
-              <p className="text-white/30 tracking-[0.4em] uppercase text-xs md:text-sm">
-                Melde dich gerne bei mir.
-              </p>
-              <div className="fixed bottom-12 left-1/2 -translate-x-1/2">
+              
+              {/* Flex-Container, um die Texte in der Mitte zu halten */}
+              <div className="flex flex-col items-center justify-center flex-1">
+                <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-8`}>
+                  Felix Bosler
+                </h1>
+                <a href="mailto:boshaft@icloud.com" className="text-white/60 hover:text-white transition-colors text-lg md:text-xl tracking-[0.2em] font-light mb-6">
+                  boshaft@icloud.com
+                </a>
+                <p className="text-white/30 tracking-[0.4em] uppercase text-xs md:text-sm">
+                  Melde dich gerne bei mir.
+                </p>
+              </div>
+
+              {/* Back Button - Fest ans untere Ende des Bildschirms gepinnt */}
+              <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
                 <button 
                   onClick={() => handleNavigation(null)} 
                   className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40 bg-transparent cursor-pointer"
