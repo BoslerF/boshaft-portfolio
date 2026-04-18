@@ -54,10 +54,7 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchImages() {
-      // Wenn wir in einer Galerie-Sektion sind (nicht Kontakt)
       if (currentSection && currentSection !== "Kontakt") {
-        
-        // MAPPING: Der Nutzer sieht "B/W", in der Datenbank suchen wir aber nach "BW"
         const dbCategory = currentSection === "B/W" ? "BW" : currentSection;
 
         const { data, error } = await supabase
@@ -131,18 +128,27 @@ export default function Home() {
               </div>
 
               <nav className="absolute right-[8vw] top-1/2 -translate-y-1/2 flex flex-col gap-6 items-end pointer-events-auto">
-                {['Street', 'Portrait', 'Event', 'Landscape', 'B/W', 'Kontakt'].map((item) => (
-                  <button 
-                    key={item} 
-                    onClick={() => handleNavigation(item)} 
-                    // Hier wird der Abstand für "Kontakt" deutlich vergrößert (mt-16 wirkt wie eine Leerzeile)
-                    className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-16' : ''}`}
-                  >
-                    <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
-                      {item}
-                    </span>
-                  </button>
-                ))}
+                {/* Hier ist der 'spacer' in der Liste eingebaut */}
+                {['Street', 'Portrait', 'Event', 'Landscape', 'B/W', 'spacer', 'Kontakt'].map((item) => {
+                  
+                  // Wenn das Element der Spacer ist, rendern wir einfach ein unsichtbares Element
+                  if (item === 'spacer') {
+                    return <div key="spacer" className="h-4 md:h-6" aria-hidden="true" />;
+                  }
+
+                  // Ansonsten rendern wir den normalen Button
+                  return (
+                    <button 
+                      key={item} 
+                      onClick={() => handleNavigation(item)} 
+                      className="bg-transparent border-none p-0 group cursor-pointer outline-none"
+                    >
+                      <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
+                        {item}
+                      </span>
+                    </button>
+                  );
+                })}
               </nav>
             </motion.div>
             
