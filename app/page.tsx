@@ -23,6 +23,7 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Hilfsfunktionen für die Lightbox-Navigation
   const nextImage = () => {
     setImages((prevImages) => {
       if (prevImages.length === 0) return prevImages;
@@ -39,6 +40,7 @@ export default function Home() {
     });
   };
 
+  // Tastatur-Steuerung (Pfeiltasten)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") nextImage();
@@ -63,7 +65,7 @@ export default function Home() {
 
         if (!error && data) {
           setImages(data);
-          setCurrentIndex(0);
+          setCurrentIndex(0); // Setzt das angeklickte Bild auf 0, wenn die Kategorie gewechselt wird
         }
       } else {
         setImages([]);
@@ -91,7 +93,7 @@ export default function Home() {
     <main className={`${geist.className} relative min-h-screen bg-black overflow-hidden flex items-center justify-center`}>
       <audio ref={audioRef} src="/shutter.mp4" preload="auto" />
 
-      {/* 1. DER SUCHER */}
+      {/* 1. DER SUCHER (Nur Startseite) */}
       <AnimatePresence>
         {!currentSection && (
           <motion.div 
@@ -126,35 +128,40 @@ export default function Home() {
               </div>
 
               <nav className="absolute right-[8vw] top-1/2 -translate-y-1/2 flex flex-col gap-6 items-end pointer-events-auto">
-                {['Street', 'Portrait', 'Event', 'Landscape', 'B/W', 'Kontakt'].map((item) => (
-                  <button 
-                    key={item} 
-                    onClick={() => handleNavigation(item)} 
-                    className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-16' : ''}`}
-                  >
-                    <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
-                      {item}
-                    </span>
-                  </button>
-                ))}
+                {/* Spacer erzeugt die saubere Lücke vor Kontakt */}
+                {['Street', 'Portrait', 'Event', 'Landscape', 'B/W', 'spacer', 'Kontakt'].map((item) => {
+                  if (item === 'spacer') {
+                    return <div key="spacer" className="h-4 md:h-6" aria-hidden="true" />;
+                  }
+
+                  return (
+                    <button 
+                      key={item} 
+                      onClick={() => handleNavigation(item)} 
+                      className="bg-transparent border-none p-0 group cursor-pointer outline-none"
+                    >
+                      <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
+                        {item}
+                      </span>
+                    </button>
+                  );
+                })}
               </nav>
             </motion.div>
             
           ) : currentSection === "Kontakt" ? (
             /* --- KONTAKTSEITE --- */
             <motion.div key="kontakt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-center text-center">
-              <div className="flex flex-col items-center justify-center flex-1">
-                <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-8`}>
-                  Felix Bosler
-                </h1>
-                <a href="mailto:boshaft@icloud.com" className="text-white/60 hover:text-white transition-colors text-lg md:text-xl tracking-[0.2em] font-light mb-6">
-                  boshaft@icloud.com
-                </a>
-                <p className="text-white/30 tracking-[0.4em] uppercase text-xs md:text-sm">
-                  Melde dich gerne bei mir.
-                </p>
-              </div>
-
+              <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-8`}>
+                Felix Bosler
+              </h1>
+              <a href="mailto:boshaft@icloud.com" className="text-white/60 hover:text-white transition-colors text-lg md:text-xl tracking-[0.2em] font-light mb-6">
+                boshaft@icloud.com
+              </a>
+              <p className="text-white/30 tracking-[0.4em] uppercase text-xs md:text-sm">
+                Melde dich gerne bei mir.
+              </p>
+              
               <div className="fixed bottom-12 left-1/2 -translate-x-1/2">
                 <button 
                   onClick={() => handleNavigation(null)} 
@@ -166,11 +173,11 @@ export default function Home() {
             </motion.div>
 
           ) : (
-            /* --- NEUES GALERIE LAYOUT (KACHELN / MASONRY) --- */
+            /* --- GALERIESEITE (KACHEL-SYSTEM / MASONRY) --- */
             <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
               
-              {/* Header (bleibt statisch oben) */}
-              <div className="p-8 md:p-12 flex flex-col gap-1 shrink-0 z-20 bg-gradient-to-b from-black via-black/80 to-transparent pb-8">
+              {/* Header (Oben fixiert) */}
+              <div className="p-8 md:p-12 flex flex-col gap-1 shrink-0 z-20 bg-gradient-to-b from-black via-black/80 to-transparent pb-12 pointer-events-none">
                 <h1 className={`${playfair.className} text-white/20 text-lg md:text-xl tracking-[0.5em] font-bold italic uppercase`}>
                   BOSHAFT
                 </h1>
@@ -179,26 +186,24 @@ export default function Home() {
                 </h2>
               </div>
 
-              {/* Scrollbarer Kachel-Bereich */}
-              <div className="flex-1 overflow-y-auto px-4 md:px-12 pb-32 pt-4 hide-scrollbar">
-                {/* CSS Columns erzeugen das Pinterest-Layout: 1 Spalte am Handy, 2 auf Tablets, 3 auf PCs */}
+              {/* Grid Container (Scrollbar) */}
+              <div className="flex-1 overflow-y-auto px-4 md:px-12 pb-32 pt-2 hide-scrollbar">
+                {/* 1 Spalte auf Handy, 2 auf Tablets, 3 auf PCs */}
                 <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6">
                   {images.map((image, index) => (
                     <motion.div 
                       key={index}
-                      // Leichter "Aufpopp"-Effekt beim Laden der Kacheln (leicht versetzt)
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="relative break-inside-avoid group cursor-zoom-in overflow-hidden rounded-md"
+                      // break-inside-avoid verhindert, dass ein Bild über zwei Spalten bricht
+                      className="relative break-inside-avoid cursor-zoom-in group rounded-md overflow-hidden"
                       onClick={() => {
                         setCurrentIndex(index);
                         setIsLightboxOpen(true);
                       }}
                     >
-                      {/* Für das Kachel-Layout nutzen wir einen Standard-img Tag mit lazy loading,
-                        da so das originale Seitenverhältnis für das Masonry-Grid perfekt erhalten bleibt.
-                      */}
+                      {/* Hier nutzen wir absichtlich <img/> für die perfekte Höhen-Berechnung im Kachelsystem */}
                       <img 
                         src={image.url} 
                         alt="Gallery Tile"
@@ -210,11 +215,11 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Back Button (Immer fest unten) */}
+              {/* Back Button (Immer fest unten im Bild) */}
               <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50">
                 <button 
                   onClick={() => handleNavigation(null)} 
-                  className="bg-black text-white/40 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-3 hover:border-white/40 cursor-pointer backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.8)]"
+                  className="bg-black/70 text-white/40 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-3 hover:border-white/40 cursor-pointer backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.8)]"
                 >
                   [ Back to Menu ]
                 </button>
@@ -224,7 +229,7 @@ export default function Home() {
         </AnimatePresence>
       </div>
 
-      {/* 3. DETAILANSICHT (Lightbox) - Bleibt identisch! */}
+      {/* 3. DETAILANSICHT (Lightbox) */}
       <AnimatePresence>
         {isLightboxOpen && images.length > 0 && (
           <motion.div 
@@ -233,6 +238,7 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-8 md:p-16 cursor-zoom-out"
           >
+            {/* Hintergrund Layer für Blur und Schließen */}
             <div 
               className="absolute inset-0 bg-black/70 backdrop-blur-2xl" 
               onClick={() => setIsLightboxOpen(false)} 
@@ -257,6 +263,7 @@ export default function Home() {
                 if (info.offset.x > 100) prevImage();
               }}
             >
+              {/* Hier nutzen wir Next Image für beste Performance in der Großansicht */}
               <Image 
                 src={images[currentIndex].url} 
                 alt="Fullscreen Gallery"
