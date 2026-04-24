@@ -23,7 +23,6 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Hilfsfunktionen für die Navigation
   const nextImage = () => {
     setImages((prevImages) => {
       if (prevImages.length === 0) return prevImages;
@@ -40,7 +39,6 @@ export default function Home() {
     });
   };
 
-  // Tastatur-Steuerung (Pfeiltasten)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") nextImage();
@@ -93,7 +91,7 @@ export default function Home() {
     <main className={`${geist.className} relative min-h-screen bg-black overflow-hidden flex items-center justify-center`}>
       <audio ref={audioRef} src="/shutter.mp4" preload="auto" />
 
-      {/* 1. DER SUCHER (Nur Startseite) */}
+      {/* 1. DER SUCHER */}
       <AnimatePresence>
         {!currentSection && (
           <motion.div 
@@ -132,8 +130,7 @@ export default function Home() {
                   <button 
                     key={item} 
                     onClick={() => handleNavigation(item)} 
-                    // Hier bekommt Kontakt einen riesigen extra Abstand nach oben (mt-12 md:mt-16)
-                    className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-12 md:mt-16' : ''}`}
+                    className={`bg-transparent border-none p-0 group cursor-pointer outline-none ${item === 'Kontakt' ? 'mt-16' : ''}`}
                   >
                     <span className="text-white/30 group-hover:text-white transition-all duration-500 text-3xl font-light tracking-[0.3em] uppercase block transform group-hover:-translate-x-4">
                       {item}
@@ -146,8 +143,6 @@ export default function Home() {
           ) : currentSection === "Kontakt" ? (
             /* --- KONTAKTSEITE --- */
             <motion.div key="kontakt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-center text-center">
-              
-              {/* Flex-Container, um die Texte in der Mitte zu halten */}
               <div className="flex flex-col items-center justify-center flex-1">
                 <h1 className={`${playfair.className} text-white/90 text-4xl md:text-6xl tracking-[0.3em] font-bold italic uppercase mb-8`}>
                   Felix Bosler
@@ -160,8 +155,7 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Back Button - Fest ans untere Ende des Bildschirms gepinnt */}
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
+              <div className="fixed bottom-12 left-1/2 -translate-x-1/2">
                 <button 
                   onClick={() => handleNavigation(null)} 
                   className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40 bg-transparent cursor-pointer"
@@ -172,10 +166,11 @@ export default function Home() {
             </motion.div>
 
           ) : (
-            /* --- GALERIESEITE --- */
-            <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col overflow-y-auto">
+            /* --- NEUES GALERIE LAYOUT (KACHELN / MASONRY) --- */
+            <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
               
-              <div className="p-12 md:p-16 flex flex-col gap-1 shrink-0">
+              {/* Header (bleibt statisch oben) */}
+              <div className="p-8 md:p-12 flex flex-col gap-1 shrink-0 z-20 bg-gradient-to-b from-black via-black/80 to-transparent pb-8">
                 <h1 className={`${playfair.className} text-white/20 text-lg md:text-xl tracking-[0.5em] font-bold italic uppercase`}>
                   BOSHAFT
                 </h1>
@@ -184,44 +179,52 @@ export default function Home() {
                 </h2>
               </div>
 
-              <div className="flex justify-center mb-12 shrink-0">
+              {/* Scrollbarer Kachel-Bereich */}
+              <div className="flex-1 overflow-y-auto px-4 md:px-12 pb-32 pt-4 hide-scrollbar">
+                {/* CSS Columns erzeugen das Pinterest-Layout: 1 Spalte am Handy, 2 auf Tablets, 3 auf PCs */}
+                <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6">
+                  {images.map((image, index) => (
+                    <motion.div 
+                      key={index}
+                      // Leichter "Aufpopp"-Effekt beim Laden der Kacheln (leicht versetzt)
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="relative break-inside-avoid group cursor-zoom-in overflow-hidden rounded-md"
+                      onClick={() => {
+                        setCurrentIndex(index);
+                        setIsLightboxOpen(true);
+                      }}
+                    >
+                      {/* Für das Kachel-Layout nutzen wir einen Standard-img Tag mit lazy loading,
+                        da so das originale Seitenverhältnis für das Masonry-Grid perfekt erhalten bleibt.
+                      */}
+                      <img 
+                        src={image.url} 
+                        alt="Gallery Tile"
+                        loading="lazy"
+                        className="w-full h-auto object-cover opacity-90 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100"
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Back Button (Immer fest unten) */}
+              <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50">
                 <button 
                   onClick={() => handleNavigation(null)} 
-                  className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40 bg-transparent cursor-pointer"
+                  className="bg-black text-white/40 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-3 hover:border-white/40 cursor-pointer backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.8)]"
                 >
                   [ Back to Menu ]
                 </button>
-              </div>
-
-              <div className="px-4 md:px-24 pb-24 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-                {images.map((img, index) => (
-                  <motion.div
-                    key={img.id || index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="relative w-full aspect-square cursor-zoom-in group overflow-hidden bg-white/5"
-                    onClick={() => {
-                      setCurrentIndex(index);
-                      setIsLightboxOpen(true);
-                    }}
-                  >
-                    <Image 
-                      src={img.url} 
-                      alt={`Gallery Image ${index + 1}`}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  </motion.div>
-                ))}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* 3. DETAILANSICHT (Lightbox) */}
+      {/* 3. DETAILANSICHT (Lightbox) - Bleibt identisch! */}
       <AnimatePresence>
         {isLightboxOpen && images.length > 0 && (
           <motion.div 
@@ -234,6 +237,12 @@ export default function Home() {
               className="absolute inset-0 bg-black/70 backdrop-blur-2xl" 
               onClick={() => setIsLightboxOpen(false)} 
             />
+
+            {images.length > 1 && (
+              <button onClick={(e) => {e.stopPropagation(); prevImage();}} className="absolute left-4 md:left-12 z-50 text-white/20 hover:text-white text-5xl md:text-7xl transition-all select-none bg-transparent border-none cursor-pointer">
+                ‹
+              </button>
+            )}
 
             <motion.div 
               key={currentIndex}
@@ -257,6 +266,12 @@ export default function Home() {
                 className="object-contain shadow-[0_0_80px_rgba(0,0,0,0.8)] pointer-events-none" 
               />
             </motion.div>
+
+            {images.length > 1 && (
+              <button onClick={(e) => {e.stopPropagation(); nextImage();}} className="absolute right-4 md:right-12 z-50 text-white/20 hover:text-white text-5xl md:text-7xl transition-all select-none bg-transparent border-none cursor-pointer">
+                ›
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
