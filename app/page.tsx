@@ -173,9 +173,9 @@ export default function Home() {
 
           ) : (
             /* --- GALERIESEITE --- */
-            <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
+            <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col overflow-y-auto">
               
-              <div className="p-12 md:p-16 flex flex-col gap-1">
+              <div className="p-12 md:p-16 flex flex-col gap-1 shrink-0">
                 <h1 className={`${playfair.className} text-white/20 text-lg md:text-xl tracking-[0.5em] font-bold italic uppercase`}>
                   BOSHAFT
                 </h1>
@@ -184,7 +184,7 @@ export default function Home() {
                 </h2>
               </div>
 
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-12 shrink-0">
                 <button 
                   onClick={() => handleNavigation(null)} 
                   className="text-white/20 hover:text-white transition-all text-[10px] tracking-[0.6em] uppercase border border-white/10 px-6 py-2 hover:border-white/40 bg-transparent cursor-pointer"
@@ -193,45 +193,28 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="flex-1 flex items-center justify-center relative px-4 md:px-24 pb-12 w-full overflow-hidden">
-                {images.length > 1 && (
-                  <button onClick={(e) => {e.stopPropagation(); prevImage();}} className="text-white/20 hover:text-white text-5xl md:text-7xl transition-all z-50 select-none bg-transparent border-none px-4 md:px-8 cursor-pointer">
-                    ‹
-                  </button>
-                )}
-
-                {images.length > 0 && (
-                  <div className="relative flex-1 h-[60vh] flex items-center justify-center">
-                    <motion.div
-                      key={currentIndex}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="relative w-full h-full cursor-zoom-in touch-none"
-                      onClick={() => setIsLightboxOpen(true)}
-                      drag="x"
-                      dragConstraints={{ left: 0, right: 0 }}
-                      onDragEnd={(e, info) => {
-                        if (info.offset.x < -50) nextImage();
-                        if (info.offset.x > 50) prevImage();
-                      }}
-                    >
-                      <Image 
-                        src={images[currentIndex].url} 
-                        alt="Gallery"
-                        fill
-                        priority={true}
-                        sizes="(max-width: 768px) 100vw, 70vw"
-                        className="object-contain shadow-2xl pointer-events-none"
-                      />
-                    </motion.div>
-                  </div>
-                )}
-
-                {images.length > 1 && (
-                  <button onClick={(e) => {e.stopPropagation(); nextImage();}} className="text-white/20 hover:text-white text-5xl md:text-7xl transition-all z-50 select-none bg-transparent border-none px-4 md:px-8 cursor-pointer">
-                    ›
-                  </button>
-                )}
+              <div className="px-4 md:px-24 pb-24 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+                {images.map((img, index) => (
+                  <motion.div
+                    key={img.id || index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="relative w-full aspect-square cursor-zoom-in group overflow-hidden bg-white/5"
+                    onClick={() => {
+                      setCurrentIndex(index);
+                      setIsLightboxOpen(true);
+                    }}
+                  >
+                    <Image 
+                      src={img.url} 
+                      alt={`Gallery Image ${index + 1}`}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </motion.div>
+                ))}
               </div>
             </motion.div>
           )}
