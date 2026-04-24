@@ -23,7 +23,7 @@ export default function AdminPage() {
   // Upload States
   const [file, setFile] = useState<File | null>(null);
   const [category, setCategory] = useState("Street");
-  const [size, setSize] = useState("normal"); // 'normal' oder 'large'
+  const [size, setSize] = useState("normal"); // 'small', 'normal' oder 'large'
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
 
@@ -67,28 +67,28 @@ export default function AdminPage() {
       // 1. Eindeutigen Dateinamen generieren (verhindert Überschreiben)
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-      const filePath = `${category}/${fileName}`; // Sortiert sie im Storage nach Kategorie
+      const filePath = `${category}/${fileName}`;
 
-      // 2. Bild in den Supabase Storage hochladen (Bucket-Name: 'images')
+      // 2. Bild in den Supabase Storage hochladen (Dein Bucket heißt 'photos'!)
       const { error: uploadError } = await supabase.storage
-        .from('images')
+        .from('photos')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // 3. Die öffentliche URL des Bildes abrufen
       const { data: publicUrlData } = supabase.storage
-        .from('images')
+        .from('photos')
         .getPublicUrl(filePath);
 
-      // 4. Den Eintrag in die Datenbank-Tabelle schreiben
+      // 4. Den Eintrag in die Datenbank-Tabelle schreiben (Tabelle heißt 'images')
       const { error: dbError } = await supabase
         .from('images')
         .insert([
           { 
             url: publicUrlData.publicUrl, 
             category: category,
-            size: size // 'normal' oder 'large' für dein Kachelsystem
+            size: size // 'small', 'normal' oder 'large'
           }
         ]);
 
@@ -208,6 +208,7 @@ export default function AdminPage() {
                   onChange={(e) => setSize(e.target.value)}
                   className="bg-black border border-white/20 text-white p-3 outline-none focus:border-white transition-colors uppercase tracking-widest text-xs cursor-pointer"
                 >
+                  <option value="small">Klein</option>
                   <option value="normal">Normal (Standard)</option>
                   <option value="large">Groß (Highlight)</option>
                 </select>
