@@ -23,7 +23,6 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Hilfsfunktionen für die Lightbox-Navigation
   const nextImage = () => {
     setImages((prevImages) => {
       if (prevImages.length === 0) return prevImages;
@@ -40,7 +39,6 @@ export default function Home() {
     });
   };
 
-  // Tastatur-Steuerung (Pfeiltasten)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") nextImage();
@@ -65,7 +63,7 @@ export default function Home() {
 
         if (!error && data) {
           setImages(data);
-          setCurrentIndex(0); // Setzt das angeklickte Bild auf 0, wenn die Kategorie gewechselt wird
+          setCurrentIndex(0);
         }
       } else {
         setImages([]);
@@ -128,7 +126,6 @@ export default function Home() {
               </div>
 
               <nav className="absolute right-[8vw] top-1/2 -translate-y-1/2 flex flex-col gap-6 items-end pointer-events-auto">
-                {/* Spacer erzeugt die saubere Lücke vor Kontakt */}
                 {['Street', 'Portrait', 'Event', 'Landscape', 'B/W', 'spacer', 'Kontakt'].map((item) => {
                   if (item === 'spacer') {
                     return <div key="spacer" className="h-4 md:h-6" aria-hidden="true" />;
@@ -173,10 +170,10 @@ export default function Home() {
             </motion.div>
 
           ) : (
-            /* --- GALERIESEITE (KACHEL-SYSTEM / MASONRY) --- */
+            /* --- GALERIESEITE (ECHTES BENTO / MASONRY GRID) --- */
             <motion.div key="section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full bg-black flex flex-col">
               
-              {/* Header (Oben fixiert) */}
+              {/* Header */}
               <div className="p-8 md:p-12 flex flex-col gap-1 shrink-0 z-20 bg-gradient-to-b from-black via-black/80 to-transparent pb-12 pointer-events-none">
                 <h1 className={`${playfair.className} text-white/20 text-lg md:text-xl tracking-[0.5em] font-bold italic uppercase`}>
                   BOSHAFT
@@ -186,36 +183,49 @@ export default function Home() {
                 </h2>
               </div>
 
-              {/* Grid Container (Scrollbar) */}
+              {/* Grid Container */}
               <div className="flex-1 overflow-y-auto px-4 md:px-12 pb-32 pt-2 hide-scrollbar">
-                {/* 1 Spalte auf Handy, 2 auf Tablets, 3 auf PCs */}
-                <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6">
-                  {images.map((image, index) => (
-                    <motion.div 
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      // break-inside-avoid verhindert, dass ein Bild über zwei Spalten bricht
-                      className="relative break-inside-avoid cursor-zoom-in group rounded-md overflow-hidden"
-                      onClick={() => {
-                        setCurrentIndex(index);
-                        setIsLightboxOpen(true);
-                      }}
-                    >
-                      {/* Hier nutzen wir absichtlich <img/> für die perfekte Höhen-Berechnung im Kachelsystem */}
-                      <img 
-                        src={image.url} 
-                        alt="Gallery Tile"
-                        loading="lazy"
-                        className="w-full h-auto object-cover opacity-90 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100"
-                      />
-                    </motion.div>
-                  ))}
+                
+                {/* Das ist der Schlüssel! grid-flow-dense packt die Elemente dicht aneinander.
+                  auto-rows-[120px] definiert die Höhe eines einzelnen "Kästchens".
+                */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 auto-rows-[120px] md:auto-rows-[200px] grid-flow-dense">
+                  
+                  {images.map((image, index) => {
+                    // Hier berechnen wir, wie viel Platz das Bild im Grid einnimmt, basierend auf deiner Admin-Eingabe!
+                    let spanClasses = "col-span-2 row-span-2"; // Standard (Normal)
+                    if (image.size === "small") spanClasses = "col-span-1 row-span-1";
+                    if (image.size === "large") spanClasses = "col-span-2 row-span-3 lg:col-span-3 lg:row-span-3";
+
+                    return (
+                      <motion.div 
+                        key={image.id || index}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.05 }}
+                        className={`relative cursor-zoom-in group rounded-md overflow-hidden bg-white/5 ${spanClasses}`}
+                        onClick={() => {
+                          setCurrentIndex(index);
+                          setIsLightboxOpen(true);
+                        }}
+                      >
+                        {/* absolute inset-0 w-full h-full object-cover verhindert JEDES Überlappen, 
+                          da das Bild exakt auf die Größe des Grid-Containers zugeschnitten wird. 
+                        */}
+                        <img 
+                          src={image.url} 
+                          alt="Gallery Tile"
+                          loading="lazy"
+                          className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                        />
+                      </motion.div>
+                    );
+                  })}
                 </div>
+
               </div>
 
-              {/* Back Button (Immer fest unten im Bild) */}
+              {/* Back Button */}
               <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50">
                 <button 
                   onClick={() => handleNavigation(null)} 
@@ -263,7 +273,6 @@ export default function Home() {
                 if (info.offset.x > 100) prevImage();
               }}
             >
-              {/* Hier nutzen wir Next Image für beste Performance in der Großansicht */}
               <Image 
                 src={images[currentIndex].url} 
                 alt="Fullscreen Gallery"
